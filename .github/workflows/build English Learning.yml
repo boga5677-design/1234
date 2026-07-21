@@ -1,0 +1,73 @@
+name: Build English Learning APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle 8.0
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.0"
+          validate-wrappers: false
+
+      - name: Check project files
+        shell: bash
+        run: |
+          set -e
+
+          test -f settings.gradle
+          test -f build.gradle
+          test -f gradle.properties
+          test -f app/build.gradle
+          test -f app/src/main/AndroidManifest.xml
+          test -f app/src/main/java/com/example/englishlearning/MainActivity.java
+          test -f app/src/main/res/values/strings.xml
+          test -f app/src/main/res/values/colors.xml
+          test -f app/src/main/res/values/styles.xml
+          test -f app/src/main/res/mipmap/ic_launcher.xml
+          test -f app/src/main/res/mipmap/ic_launcher_round.xml
+
+          echo "All required files exist."
+
+      - name: Display versions
+        shell: bash
+        run: |
+          java -version
+          gradle --version
+
+      - name: Build Debug APK
+        shell: bash
+        run: |
+          set -e
+
+          gradle clean assembleDebug \
+            --no-daemon \
+            --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: EnglishLearning-Debug-APK
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30
