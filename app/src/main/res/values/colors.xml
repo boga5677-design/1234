@@ -1,26 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style
-        name="AppTheme"
-        parent="android:style/Theme.Material.Light.NoActionBar">
-
-        <item name="android:windowBackground">@color/background</item>
-
-        <item name="android:statusBarColor">@color/purple</item>
-
-        <item name="android:navigationBarColor">@color/white</item>
-
-        <item name="android:colorAccent">@color/purple</item>
-
-        <item name="android:textColorPrimary">@color/black</item>
-
-        <item name="android:textColorSecondary">#666666</item>
-
-        <item name="android:windowLightStatusBar">false</item>
-
-        <item name="android:fontFamily">sans-serif</item>
-
-    </style>
+    <color name="purple">#5B3FD6</color>
+    <color name="purple_dark">#4527A0</color>
+    <color name="green">#4CAF50</color>
+    <color name="red">#E53935</color>
+    <color name="background">#F6F7FC</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
 
 </resources>
