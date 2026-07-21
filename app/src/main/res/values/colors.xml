@@ -1,18 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <color name="purple">#5B3FD6</color>
+    <style
+        name="AppTheme"
+        parent="android:style/Theme.Material.Light.NoActionBar">
 
-    <color name="purple_dark">#4527A0</color>
+        <item name="android:windowBackground">@color/background</item>
 
-    <color name="green">#4CAF50</color>
+        <item name="android:statusBarColor">@color/purple</item>
 
-    <color name="red">#E53935</color>
+        <item name="android:navigationBarColor">@color/white</item>
 
-    <color name="background">#F6F7FC</color>
+        <item name="android:colorAccent">@color/purple</item>
 
-    <color name="white">#FFFFFF</color>
+        <item name="android:textColorPrimary">@color/black</item>
 
-    <color name="black">#000000</color>
+        <item name="android:textColorSecondary">#666666</item>
+
+        <item name="android:windowLightStatusBar">false</item>
+
+        <item name="android:fontFamily">sans-serif</item>
+
+    </style>
 
 </resources>
