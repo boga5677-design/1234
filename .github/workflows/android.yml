@@ -1,22 +1,63 @@
-- name: Checkout repository
-  uses: actions/checkout@v5
+name: Android CI
 
-- name: Set up Java 17
-  uses: actions/setup-java@v5
-  with:
-    distribution: temurin
-    java-version: "17"
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
 
-- name: Set up Gradle 8.0
-  uses: gradle/actions/setup-gradle@v5
-  with:
-    gradle-version: "8.0"
-    validate-wrappers: false
+permissions:
+  contents: read
 
-- name: Upload APK
-  uses: actions/upload-artifact@v6
-  with:
-    name: EnglishLearning-Debug-APK
-    path: app/build/outputs/apk/debug/*.apk
-    if-no-files-found: error
-    retention-days: 30
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle 8.0
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          gradle-version: "8.0"
+          validate-wrappers: false
+
+      - name: Check project files
+        shell: bash
+        run: |
+          set -e
+
+          test -f settings.gradle
+          test -f build.gradle
+          test -f gradle.properties
+          test -f app/build.gradle
+          test -f app/src/main/AndroidManifest.xml
+          test -f app/src/main/java/com/example/englishlearning/MainActivity.java
+          test -f app/src/main/res/values/strings.xml
+          test -f app/src/main/res/values/colors.xml
+          test -f app/src/main/res/values/styles.xml
+
+          echo "All required project files exist."
+
+      - name: Build Debug APK
+        shell: bash
+        run: |
+          gradle clean assembleDebug \
+            --no-daemon \
+            --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: EnglishLearning-Debug-APK
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30
