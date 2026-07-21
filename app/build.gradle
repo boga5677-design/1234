@@ -1,7 +1,11 @@
-plugins { id 'com.android.application' }
+plugins {
+    id 'com.android.application'
+}
+
 android {
     namespace 'com.example.englishlearning'
     compileSdk 33
+
     defaultConfig {
         applicationId "com.example.englishlearning"
         minSdk 23
@@ -9,7 +13,20 @@ android {
         versionCode 1
         versionName "1.0"
     }
-    buildTypes { release { minifyEnabled false } }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile(
+                    'proguard-android-optimize.txt'
+            ), 'proguard-rules.pro'
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
