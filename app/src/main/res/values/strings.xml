@@ -1,2 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources><string name="app_name">英文學習</string></resources>
+<resources>
+
+    <string name="app_name">英文學習</string>
+
+    <string name="title">英文學習</string>
+
+    <string name="subtitle">English Learning</string>
+
+    <string name="start">開始學習</string>
+
+    <string name="next">下一題</string>
+
+    <string name="finish">完成</string>
+
+    <string name="restart">重新開始</string>
+
+    <string name="correct">答對了！</string>
+
+    <string name="wrong">答錯了！</string>
+
+    <string name="score">分數</string>
+
+    <string name="best_score">最佳成績</string>
+
+    <string name="listen">🔊 聽發音</string>
+
+    <string name="choose_answer">請選擇正確答案</string>
+
+    <string name="completed">測驗完成</string>
+
+</resources>
