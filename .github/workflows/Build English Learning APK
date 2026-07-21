@@ -1,9 +1,7 @@
-
 name: Build English Learning APK
 
 on:
   workflow_dispatch:
-
   push:
     branches:
       - main
@@ -13,7 +11,6 @@ permissions:
 
 jobs:
   build:
-    name: Build Debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -21,7 +18,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -33,59 +30,22 @@ jobs:
           gradle-version: "8.0"
           validate-wrappers: false
 
-      - name: Verify project files
-        shell: bash
+      - name: Show project files
         run: |
-          set -e
+          pwd
+          find . -maxdepth 5 -type f | sort
 
-          test -f settings.gradle
-          test -f build.gradle
-          test -f gradle.properties
-          test -f app/build.gradle
-          test -f app/src/main/AndroidManifest.xml
-          test -f app/src/main/java/com/example/englishlearning/MainActivity.java
-          test -f app/src/main/res/values/strings.xml
-          test -f app/src/main/res/values/styles.xml
-          test -f app/src/main/res/mipmap/ic_launcher.xml
-          test -f app/src/main/res/mipmap/ic_launcher_round.xml
-
-          echo "All required project files exist."
-
-      - name: Display versions
-        shell: bash
+      - name: Build APK
         run: |
-          java -version
-          gradle --version
-
-      - name: Build Debug APK
-        shell: bash
-        run: |
-          set -e
-
-          gradle clean assembleDebug \
-            --no-daemon \
-            --stacktrace
-
-      - name: Locate APK
-        shell: bash
-        run: |
-          set -e
-
-          APK_PATH="$(find app/build/outputs/apk/debug \
-            -type f \
-            -name "*.apk" \
-            | head -n 1)"
-
-          if [ -z "$APK_PATH" ]; then
-            echo "::error::找不到 APK 檔案"
-            exit 1
-          fi
-
-          echo "APK_PATH=$APK_PATH" >> "$GITHUB_ENV"
-          echo "APK created: $APK_PATH"
+          gradle clean assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
+        with:
+          name: EnglishLearning-Debug-APK
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30
         with:
           name: EnglishLearning-Debug-APK
           path: ${{ env.APK_PATH }}
