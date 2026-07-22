@@ -79,10 +79,23 @@ public class MainActivity extends Activity
         List<Vocabulary.Word> allWords =
                 new ArrayList<>();
 
-        Collections.addAll(
-                allWords,
-                Vocabulary.WORDS
-        );
+       try {
+
+    allWords.addAll(
+            Vocabulary.load(this)
+    );
+
+} catch (IOException error) {
+
+    Toast.makeText(
+            this,
+            "題庫載入失敗："
+                    + error.getMessage(),
+            Toast.LENGTH_LONG
+    ).show();
+
+    return;
+}
 
         Collections.shuffle(allWords);
 
