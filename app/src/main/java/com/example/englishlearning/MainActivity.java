@@ -14,66 +14,18 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 public class MainActivity extends Activity
         implements TextToSpeech.OnInitListener {
 
-    /*
-     * 英文單字
-     */
-    private final String[] words = {
-            "apple",
-            "book",
-            "school",
-            "beautiful",
-            "important",
-            "family",
-            "water",
-            "teacher",
-            "morning",
-            "travel"
-    };
+    private static final int QUESTION_COUNT = 10;
+    private static final int OPTION_COUNT = 4;
 
-    /*
-     * 各題選項
-     */
-    private final String[][] choices = {
-            {"蘋果", "香蕉", "葡萄", "橘子"},
-            {"筆", "書", "桌子", "書包"},
-            {"老師", "學生", "學校", "教室"},
-            {"快速的", "美麗的", "困難的", "重要的"},
-            {"簡單的", "重要的", "安靜的", "便宜的"},
-            {"朋友", "家庭", "工作", "城市"},
-            {"牛奶", "咖啡", "水", "果汁"},
-            {"醫生", "老師", "司機", "警察"},
-            {"晚上", "下午", "早晨", "昨天"},
-            {"閱讀", "旅行", "游泳", "工作"}
-    };
-
-    /*
-     * 正確答案的位置
-     * 0 代表第一個選項
-     * 1 代表第二個選項
-     * 2 代表第三個選項
-     * 3 代表第四個選項
-     */
-    private final int[] correctAnswers = {
-            0,
-            1,
-            2,
-            1,
-            1,
-            1,
-            2,
-            1,
-            2,
-            1
-    };
-
-    /*
-     * 畫面元件
-     */
     private TextView progressText;
     private TextView wordText;
     private TextView resultText;
@@ -84,26 +36,23 @@ public class MainActivity extends Activity
     private Button nextButton;
     private Button[] answerButtons;
 
-    /*
-     * 測驗狀態
-     */
+    private final List<Vocabulary.Word> quizWords = new ArrayList<>();
+    private final String[] currentChoices = new String[OPTION_COUNT];
+
     private int currentQuestion = 0;
+    private int correctAnswerIndex = 0;
     private int score = 0;
     private boolean answered = false;
 
-    /*
-     * 英文發音
-     */
     private TextToSpeech textToSpeech;
-
-    /*
-     * 儲存最佳成績
-     */
     private SharedPreferences preferences;
+    private Random random;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        random = new Random();
 
         preferences = getSharedPreferences(
                 "english_learning",
@@ -115,12 +64,40 @@ public class MainActivity extends Activity
                 this
         );
 
+        prepareQuiz();
         createScreen();
         showQuestion();
     }
 
     /*
-     * 建立整個 App 畫面
+     * 隨機產生本次測驗題目
+     */
+    private void prepareQuiz() {
+
+        quizWords.clear();
+
+        List<Vocabulary.Word> allWords =
+                new ArrayList<>();
+
+        Collections.addAll(
+                allWords,
+                Vocabulary.WORDS
+        );
+
+        Collections.shuffle(allWords);
+
+        int count = Math.min(
+                QUESTION_COUNT,
+                allWords.size()
+        );
+
+        quizWords.addAll(
+                allWords.subList(0, count)
+        );
+    }
+
+    /*
+     * 建立畫面
      */
     private void createScreen() {
 
@@ -149,11 +126,8 @@ public class MainActivity extends Activity
 
         scrollView.addView(root);
 
-        /*
-         * 主標題
-         */
         TextView titleText = createTextView(
-                "英文學習",
+                "TOEIC 英文學習",
                 30,
                 Color.rgb(91, 63, 214)
         );
@@ -163,28 +137,20 @@ public class MainActivity extends Activity
                 Typeface.BOLD
         );
 
-        titleText.setGravity(
-                Gravity.CENTER
-        );
+        titleText.setGravity(Gravity.CENTER);
 
         root.addView(
                 titleText,
                 fullWidth()
         );
 
-        /*
-         * 副標題
-         */
-        TextView subtitleText =
-                createTextView(
-                        "English Learning",
-                        16,
-                        Color.DKGRAY
-                );
-
-        subtitleText.setGravity(
-                Gravity.CENTER
+        TextView subtitleText = createTextView(
+                "多益單字隨機測驗",
+                16,
+                Color.DKGRAY
         );
+
+        subtitleText.setGravity(Gravity.CENTER);
 
         subtitleText.setPadding(
                 0,
@@ -198,9 +164,6 @@ public class MainActivity extends Activity
                 fullWidth()
         );
 
-        /*
-         * 白色內容區塊
-         */
         LinearLayout card =
                 new LinearLayout(this);
 
@@ -215,18 +178,13 @@ public class MainActivity extends Activity
                 dp(22)
         );
 
-        card.setBackgroundColor(
-                Color.WHITE
-        );
+        card.setBackgroundColor(Color.WHITE);
 
         root.addView(
                 card,
                 fullWidth()
         );
 
-        /*
-         * 題目進度
-         */
         progressText = createTextView(
                 "",
                 15,
@@ -238,9 +196,6 @@ public class MainActivity extends Activity
                 fullWidth()
         );
 
-        /*
-         * 英文單字
-         */
         wordText = createTextView(
                 "",
                 36,
@@ -252,9 +207,7 @@ public class MainActivity extends Activity
                 Typeface.BOLD
         );
 
-        wordText.setGravity(
-                Gravity.CENTER
-        );
+        wordText.setGravity(Gravity.CENTER);
 
         wordText.setPadding(
                 0,
@@ -266,10 +219,10 @@ public class MainActivity extends Activity
         card.addView(
                 wordText,
                 fullWidth()
-        );        /*
-         * 發音按鈕
-         */
-        speakButton = createButton("🔊 聽英文發音");
+        );
+
+        speakButton =
+                createButton("🔊 聽英文發音");
 
         speakButton.setOnClickListener(
                 view -> speakCurrentWord()
@@ -280,21 +233,18 @@ public class MainActivity extends Activity
                 fullWidth()
         );
 
-        /*
-         * 題目提示
-         */
-        TextView questionTitle =
+        TextView instructionText =
                 createTextView(
                         "請選擇正確的中文意思",
                         18,
                         Color.DKGRAY
                 );
 
-        questionTitle.setGravity(
+        instructionText.setGravity(
                 Gravity.CENTER
         );
 
-        questionTitle.setPadding(
+        instructionText.setPadding(
                 0,
                 dp(22),
                 0,
@@ -302,18 +252,16 @@ public class MainActivity extends Activity
         );
 
         card.addView(
-                questionTitle,
+                instructionText,
                 fullWidth()
         );
 
-        /*
-         * 四個答案按鈕
-         */
-        answerButtons = new Button[4];
+        answerButtons =
+                new Button[OPTION_COUNT];
 
-        for (int i = 0; i < answerButtons.length; i++) {
+        for (int i = 0; i < OPTION_COUNT; i++) {
 
-            final int selected = i;
+            final int selectedIndex = i;
 
             Button button =
                     createButton("");
@@ -329,7 +277,9 @@ public class MainActivity extends Activity
             );
 
             button.setOnClickListener(
-                    view -> checkAnswer(selected)
+                    view -> checkAnswer(
+                            selectedIndex
+                    )
             );
 
             card.addView(
@@ -340,19 +290,13 @@ public class MainActivity extends Activity
             answerButtons[i] = button;
         }
 
-        /*
-         * 答題結果
-         */
-        resultText =
-                createTextView(
-                        "",
-                        18,
-                        Color.BLACK
-                );
-
-        resultText.setGravity(
-                Gravity.CENTER
+        resultText = createTextView(
+                "",
+                18,
+                Color.BLACK
         );
+
+        resultText.setGravity(Gravity.CENTER);
 
         resultText.setPadding(
                 0,
@@ -366,38 +310,26 @@ public class MainActivity extends Activity
                 fullWidth()
         );
 
-        /*
-         * 分數
-         */
-        scoreText =
-                createTextView(
-                        "",
-                        16,
-                        Color.DKGRAY
-                );
-
-        scoreText.setGravity(
-                Gravity.CENTER
+        scoreText = createTextView(
+                "",
+                16,
+                Color.DKGRAY
         );
+
+        scoreText.setGravity(Gravity.CENTER);
 
         card.addView(
                 scoreText,
                 fullWidth()
         );
 
-        /*
-         * 最佳成績
-         */
-        bestScoreText =
-                createTextView(
-                        "",
-                        15,
-                        Color.GRAY
-                );
-
-        bestScoreText.setGravity(
-                Gravity.CENTER
+        bestScoreText = createTextView(
+                "",
+                15,
+                Color.GRAY
         );
+
+        bestScoreText.setGravity(Gravity.CENTER);
 
         bestScoreText.setPadding(
                 0,
@@ -411,15 +343,10 @@ public class MainActivity extends Activity
                 fullWidth()
         );
 
-        /*
-         * 下一題按鈕
-         */
         nextButton =
                 createButton("下一題");
 
-        nextButton.setVisibility(
-                View.GONE
-        );
+        nextButton.setVisibility(View.GONE);
 
         nextButton.setOnClickListener(
                 view -> nextQuestion()
@@ -430,29 +357,29 @@ public class MainActivity extends Activity
                 fullWidth()
         );
 
-        /*
-         * 顯示畫面
-         */
         setContentView(scrollView);
     }
 
     /*
-     * 顯示目前題目
+     * 顯示題目
      */
     private void showQuestion() {
 
         answered = false;
 
+        Vocabulary.Word currentWord =
+                quizWords.get(currentQuestion);
+
         progressText.setText(
                 "第 "
                         + (currentQuestion + 1)
                         + " 題，共 "
-                        + words.length
+                        + quizWords.size()
                         + " 題"
         );
 
         wordText.setText(
-                words[currentQuestion]
+                currentWord.getEnglish()
         );
 
         resultText.setText("");
@@ -461,7 +388,7 @@ public class MainActivity extends Activity
                 "目前得分：" + score
         );
 
-        int best =
+        int bestScore =
                 preferences.getInt(
                         "best_score",
                         0
@@ -469,25 +396,22 @@ public class MainActivity extends Activity
 
         bestScoreText.setText(
                 "最佳成績："
-                        + best
+                        + bestScore
                         + " / "
-                        + words.length
+                        + quizWords.size()
         );
 
-        nextButton.setVisibility(
-                View.GONE
-        );
+        generateChoices(currentWord);
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < OPTION_COUNT; i++) {
 
             Button button =
                     answerButtons[i];
 
+            button.setVisibility(View.VISIBLE);
             button.setEnabled(true);
-
-            button.setText(
-                    choices[currentQuestion][i]
-            );
+            button.setText(currentChoices[i]);
+            button.setTextColor(Color.BLACK);
 
             button.setBackgroundColor(
                     Color.rgb(
@@ -496,15 +420,67 @@ public class MainActivity extends Activity
                             250
                     )
             );
-
-            button.setTextColor(
-                    Color.BLACK
-            );
         }
-    }    /*
+
+        speakButton.setVisibility(View.VISIBLE);
+
+        nextButton.setVisibility(View.GONE);
+
+        nextButton.setOnClickListener(
+                view -> nextQuestion()
+        );
+    }
+
+    /*
+     * 隨機產生四個中文選項
+     */
+    private void generateChoices(
+            Vocabulary.Word correctWord
+    ) {
+
+        List<String> choices =
+                new ArrayList<>();
+
+        choices.add(
+                correctWord.getChinese()
+        );
+
+        while (choices.size() < OPTION_COUNT) {
+
+            int index = random.nextInt(
+                    Vocabulary.WORDS.length
+            );
+
+            String randomChinese =
+                    Vocabulary.WORDS[index]
+                            .getChinese();
+
+            if (!choices.contains(randomChinese)) {
+                choices.add(randomChinese);
+            }
+        }
+
+        Collections.shuffle(choices);
+
+        for (int i = 0; i < OPTION_COUNT; i++) {
+
+            currentChoices[i] =
+                    choices.get(i);
+
+            if (currentChoices[i].equals(
+                    correctWord.getChinese()
+            )) {
+                correctAnswerIndex = i;
+            }
+        }
+    }
+
+    /*
      * 檢查答案
      */
-    private void checkAnswer(int selected) {
+    private void checkAnswer(
+            int selectedIndex
+    ) {
 
         if (answered) {
             return;
@@ -516,59 +492,70 @@ public class MainActivity extends Activity
             button.setEnabled(false);
         }
 
-        int correct = correctAnswers[currentQuestion];
+        Button correctButton =
+                answerButtons[
+                        correctAnswerIndex
+                        ];
 
-        answerButtons[correct].setBackgroundColor(
+        correctButton.setBackgroundColor(
                 Color.rgb(204, 240, 210)
         );
 
-        answerButtons[correct].setTextColor(
-                Color.rgb(0,120,60)
+        correctButton.setTextColor(
+                Color.rgb(0, 120, 60)
         );
 
-        if (selected == correct) {
+        if (selectedIndex ==
+                correctAnswerIndex) {
 
             score++;
 
-            resultText.setText("✓ 答對了！");
+            resultText.setText(
+                    "✓ 答對了！"
+            );
 
             resultText.setTextColor(
-                    Color.rgb(0,120,60)
+                    Color.rgb(0, 120, 60)
             );
 
         } else {
 
-            answerButtons[selected].setBackgroundColor(
-                    Color.rgb(255,220,220)
+            Button wrongButton =
+                    answerButtons[
+                            selectedIndex
+                            ];
+
+            wrongButton.setBackgroundColor(
+                    Color.rgb(255, 220, 220)
             );
 
-            answerButtons[selected].setTextColor(
-                    Color.RED
-            );
+            wrongButton.setTextColor(Color.RED);
 
             resultText.setText(
-                    "✗ 答錯了！\n正確答案：" +
-                            choices[currentQuestion][correct]
+                    "✗ 答錯了\n正確答案："
+                            + currentChoices[
+                            correctAnswerIndex
+                            ]
             );
 
-            resultText.setTextColor(
-                    Color.RED
-            );
+            resultText.setTextColor(Color.RED);
         }
 
         scoreText.setText(
                 "目前得分：" + score
         );
 
-        if (currentQuestion == words.length - 1) {
+        if (currentQuestion ==
+                quizWords.size() - 1) {
+
             nextButton.setText("查看成績");
+
         } else {
+
             nextButton.setText("下一題");
         }
 
-        nextButton.setVisibility(
-                View.VISIBLE
-        );
+        nextButton.setVisibility(View.VISIBLE);
     }
 
     /*
@@ -578,14 +565,15 @@ public class MainActivity extends Activity
 
         currentQuestion++;
 
-        if (currentQuestion >= words.length) {
+        if (currentQuestion >=
+                quizWords.size()) {
 
             showFinalResult();
 
-            return;
-        }
+        } else {
 
-        showQuestion();
+            showQuestion();
+        }
     }
 
     /*
@@ -593,13 +581,15 @@ public class MainActivity extends Activity
      */
     private void showFinalResult() {
 
-        int best =
+        int bestScore =
                 preferences.getInt(
                         "best_score",
                         0
                 );
 
-        if (score > best) {
+        if (score > bestScore) {
+
+            bestScore = score;
 
             preferences.edit()
                     .putInt(
@@ -607,26 +597,29 @@ public class MainActivity extends Activity
                             score
                     )
                     .apply();
-
-            best = score;
         }
 
-        progressText.setText("🎉 測驗完成");
-
-        wordText.setText(
-                score + " / " + words.length
+        progressText.setText(
+                "測驗完成"
         );
 
-        if (score == words.length) {
+        wordText.setText(
+                score
+                        + " / "
+                        + quizWords.size()
+        );
+
+        if (score ==
+                quizWords.size()) {
 
             resultText.setText(
-                    "太厲害了！全部答對！"
+                    "太棒了，全部答對！"
             );
 
         } else if (score >= 8) {
 
             resultText.setText(
-                    "非常棒！繼續保持！"
+                    "表現很好，繼續保持！"
             );
 
         } else if (score >= 6) {
@@ -638,40 +631,40 @@ public class MainActivity extends Activity
         } else {
 
             resultText.setText(
-                    "多練習幾次，一定會進步！"
+                    "再練習一次，一定會進步！"
             );
         }
 
+        resultText.setTextColor(
+                Color.rgb(91, 63, 214)
+        );
+
         scoreText.setText(
-                "最佳成績：" +
-                        best +
-                        " / " +
-                        words.length
+                "最佳成績："
+                        + bestScore
+                        + " / "
+                        + quizWords.size()
         );
 
         bestScoreText.setText("");
 
-        speakButton.setVisibility(
-                View.GONE
-        );
+        speakButton.setVisibility(View.GONE);
 
         for (Button button : answerButtons) {
-            button.setVisibility(
-                    View.GONE
-            );
+            button.setVisibility(View.GONE);
         }
 
-        nextButton.setVisibility(
-                View.VISIBLE
-        );
+        nextButton.setText("重新隨機出題");
 
-        nextButton.setText("重新開始");
+        nextButton.setVisibility(View.VISIBLE);
 
         nextButton.setOnClickListener(
                 view -> restartQuiz()
         );
-    }    /*
-     * 重新開始測驗
+    }
+
+    /*
+     * 重新隨機測驗
      */
     private void restartQuiz() {
 
@@ -679,48 +672,38 @@ public class MainActivity extends Activity
         score = 0;
         answered = false;
 
-        speakButton.setVisibility(
-                View.VISIBLE
-        );
-
-        for (Button button : answerButtons) {
-
-            button.setVisibility(
-                    View.VISIBLE
-            );
-        }
-
-        nextButton.setOnClickListener(
-                view -> nextQuestion()
-        );
-
+        prepareQuiz();
         showQuestion();
     }
 
     /*
-     * 播放目前英文單字
+     * 播放目前單字
      */
     private void speakCurrentWord() {
 
-        if (textToSpeech == null) {
+        if (textToSpeech == null
+                || quizWords.isEmpty()) {
             return;
         }
 
+        String word =
+                quizWords
+                        .get(currentQuestion)
+                        .getEnglish();
+
         textToSpeech.speak(
-                words[currentQuestion],
+                word,
                 TextToSpeech.QUEUE_FLUSH,
                 null,
-                "english_word"
+                "toeic_word"
         );
     }
 
-    /*
-     * TextToSpeech 初始化完成
-     */
     @Override
     public void onInit(int status) {
 
-        if (status != TextToSpeech.SUCCESS) {
+        if (status !=
+                TextToSpeech.SUCCESS) {
 
             Toast.makeText(
                     this,
@@ -750,14 +733,10 @@ public class MainActivity extends Activity
         }
     }
 
-    /*
-     * 關閉 App 時釋放語音資源
-     */
     @Override
     protected void onDestroy() {
 
         if (textToSpeech != null) {
-
             textToSpeech.stop();
             textToSpeech.shutdown();
         }
@@ -765,28 +744,22 @@ public class MainActivity extends Activity
         super.onDestroy();
     }
 
-    /*
-     * 建立文字元件
-     */
     private TextView createTextView(
             String text,
-            int textSize,
-            int textColor
+            int size,
+            int color
     ) {
 
         TextView textView =
                 new TextView(this);
 
         textView.setText(text);
-        textView.setTextSize(textSize);
-        textView.setTextColor(textColor);
+        textView.setTextSize(size);
+        textView.setTextColor(color);
 
         return textView;
     }
 
-    /*
-     * 建立按鈕
-     */
     private Button createButton(
             String text
     ) {
@@ -808,9 +781,6 @@ public class MainActivity extends Activity
         return button;
     }
 
-    /*
-     * 建立滿寬版面參數
-     */
     private LinearLayout.LayoutParams fullWidth() {
 
         return new LinearLayout.LayoutParams(
@@ -819,17 +789,13 @@ public class MainActivity extends Activity
         );
     }
 
-    /*
-     * dp 轉換成 px
-     */
     private int dp(int value) {
 
         return Math.round(
                 value
-                        *
-                        getResources()
-                                .getDisplayMetrics()
-                                .density
+                        * getResources()
+                        .getDisplayMetrics()
+                        .density
         );
     }
 }
