@@ -96,7 +96,8 @@ public class MainActivity extends Activity
 
     return;
 }
-
+            
+            import java.io.IOException;
         Collections.shuffle(allWords);
 
         int count = Math.min(
